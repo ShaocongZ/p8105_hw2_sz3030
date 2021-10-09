@@ -14,7 +14,7 @@ library(tidyverse)
 
 trash.wheel = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
                           sheet = "Mr. Trash Wheel",
-                          range = cell_cols("A:N")) %>%
+                          range = "A2:N535") %>%
   janitor::clean_names() %>%
   drop_na(dumpster) %>%
   mutate(sports_balls = round(sports_balls))
@@ -38,16 +38,16 @@ preciptation_2019 = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
   mutate(year = 2019)
 ```
 
-# Combine precipitation datasets and convert month to a character variable
+## Combine precipitation datasets and convert month to a character variable
 
 ```{r Combine}
 comb_precipitation = bind_rows(preciptation_2018, preciptation_2019) %>%
   mutate(month = month.name[month])
 ```
 
-For the Mr.Trash Wheel sheet, there are `r nrow(trash.wheel)` observations and `r ncol(trash.wheel)` variables. The variables includes information on the dumpster number, date of collection, amount of total litter and litter type. What's more, the median number of sports balls in a dumpster in 2019 was `r trash.wheel %>% filter(year == 2019) %>% pull(sports_balls) %>% median()`.
+For the Mr.Trash Wheel sheet, there are `r nrow(trash.wheel)` observations and `r ncol(trash.wheel)` variables. The variables includes information on the dumpster number, date of collection, amount of total litter and litter type. What's more, the median number of sports balls in a dumpster in 2019 was `r median(trash.wheel %>% filter(year == 2019) %>% pull(sports_balls))`.
 
-For the combined precipitation, there are `r nrow(comb_precipitation)` observations and `r ncol(comb_precipitation)` variables. The variables includes information about the year, month and its total precipitation. What's more, the total precipitation in 2018 is `r comb_precipitation %>% filter(year == 2018) %>% pull(total) %>% sum()`
+For the combined precipitation, there are `r nrow(comb_precipitation)` observations and `r ncol(comb_precipitation)` variables. The variables includes information about the year, month and its total precipitation. What's more, the total precipitation in 2018 is `r sum(comb_precipitation %>% filter(year == 2018) %>% pull(total))`
 
 # Problem 2
 
@@ -73,6 +73,27 @@ snp = read_csv("./fivethirtyeight_datasets/snp.csv") %>%
   select(year, month, close) 
 ```
 
+```{r}
+year.function = function(dat){
+  for (i in 1:nrow(dat)) {
+    if(dat$year[i] >= 0 && dat$year[i] <= 15){
+      dat$year[i] = 2000 + dat$year[i]
+    } else {
+      dat$year[i] = 1900 + dat$year[i]
+    }
+  }
+  return(dat)
+}
+
+snp = read_csv("./fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(date, into = c( "month", "day","year"), convert = TRUE) %>%
+  year.function() %>%
+  arrange(year, month) %>%
+  mutate(month = month.name[month]) %>%
+  select(year, month, close) 
+```
+
 
 ## Third, tidy the unemployment data so that it can be merged with the previous datasets.
 
@@ -90,7 +111,7 @@ unemployment = read_csv("./fivethirtyeight_datasets/unemployment.csv") %>%
 
 ## Join the datasets by merging snp into pols, and merging unemployment into the result.
 
-```{r }
+```{r}
 comb_prob2 = left_join(pols_moth, snp) %>%
   left_join(., unemployment)
 ```
@@ -110,22 +131,23 @@ The merged dataset comb_prob2 has `r nrow(comb_prob2)` observations and `r ncol(
 
 By looking through the dataset, we can see that the names of a categorical predictor and the case structure of string variables changed over time when comes to year 2012 and the former. For example, "BLACK NON HISPANIC" of Ethnicities in 2016 while "BLACK NON HISP" in 2012, name "Aleksandra" in 2013 contrast with "ALEKSANDER" in 2012.
 
-```{r echo = FALSE}
+```{r}
 popular_baby_names = read_csv("./Popular_Baby_Names.csv") %>%
   janitor::clean_names() %>%
   mutate(
-    childs_first_name = str_to_sentence(childs_first_name),
-    ethnicity = str_to_sentence(ethnicity),
-    ethnicity = recode(ethnicity, "Asian and paci" = "Asian and pacific islander",
-                       "Black non hisp" = "Black non hispanic",
-                       "White non hisp" = "White non hispanic")
+    childs_first_name = str_to_title(childs_first_name),
+    ethnicity = str_to_lower(ethnicity),
+    ethnicity = recode(ethnicity, "asian and paci" = "asian and pacific islander",
+                       "black non hisp" = "black non hispanic",
+                       "white non hisp" = "white non hispanic")
   ) %>%
-   distinct %>% 
-  arrange(year_of_birth, ethnicity, rank)
+   distinct() %>% 
+   arrange(year_of_birth, ethnicity, rank)
 
-#popular_baby_names[!duplicated(popular_baby_names),] # remove the duplicated rows
+distinct(popular_baby_names, ethnicity)
 
 ```
+
 
 ## Produce a well-structured, reader-friendly table showing the rank in popularity of the name “Olivia” as a female baby name over time; this should have rows for ethnicities and columns for year.
 
@@ -149,7 +171,7 @@ popular_baby_names %>%
 
 ```{r}
 popular_baby_names %>%
-  filter(gender == "MALE", ethnicity == "White non hispanic", year_of_birth == 2016) %>%
+  filter(gender == "MALE", ethnicity == "white non hispanic", year_of_birth == 2016) %>%
   ggplot(aes(x = rank, y = count)) + geom_point()
 ```
 
