@@ -13,7 +13,8 @@ library(readxl)
 library(tidyverse)
 
 trash.wheel = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
-                          sheet = "Mr. Trash Wheel",range = cell_cols("A:N")) %>%
+                          sheet = "Mr. Trash Wheel",
+                          range = cell_cols("A:N")) %>%
   janitor::clean_names() %>%
   drop_na(dumpster) %>%
   mutate(sports_balls = round(sports_balls))
@@ -23,13 +24,15 @@ trash.wheel = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
 
 ```{r Precipitation}
 preciptation_2018 = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
-                          sheet = "2018 Precipitation", skip = 1) %>%
+                          sheet = "2018 Precipitation", 
+                          skip = 1) %>%
   janitor::clean_names() %>%
   drop_na(month, total) %>%
   mutate(year = 2018)
 
 preciptation_2019 = read_excel("./Trash-Wheel-Collection-Totals-7-2020-2.xlsx",
-                          sheet = "2019 Precipitation", skip = 1) %>%
+                          sheet = "2019 Precipitation", 
+                          skip = 1) %>%
   janitor::clean_names() %>%
   drop_na(month, total) %>%
   mutate(year = 2019)
@@ -100,6 +103,55 @@ The original unemployment.csv dataset is related to the percentage of unemployme
 
 The merged dataset comb_prob2 has `r nrow(comb_prob2)` observations and `r ncol(comb_prob2)` variables. The dataset contains all of the variables above
 
+
+# Problem 3
+
+## Load and tidy the data
+
+By looking through the dataset, we can see that the names of a categorical predictor and the case structure of string variables changed over time when comes to year 2012 and the former. For example, "BLACK NON HISPANIC" of Ethnicities in 2016 while "BLACK NON HISP" in 2012, name "Aleksandra" in 2013 contrast with "ALEKSANDER" in 2012.
+
+```{r echo = FALSE}
+popular_baby_names = read_csv("./Popular_Baby_Names.csv") %>%
+  janitor::clean_names() %>%
+  mutate(
+    childs_first_name = str_to_sentence(childs_first_name),
+    ethnicity = str_to_sentence(ethnicity),
+    ethnicity = recode(ethnicity, "Asian and paci" = "Asian and pacific islander",
+                       "Black non hisp" = "Black non hispanic",
+                       "White non hisp" = "White non hispanic")
+  ) %>%
+   distinct %>% 
+  arrange(year_of_birth, ethnicity, rank)
+
+#popular_baby_names[!duplicated(popular_baby_names),] # remove the duplicated rows
+
+```
+
+## Produce a well-structured, reader-friendly table showing the rank in popularity of the name “Olivia” as a female baby name over time; this should have rows for ethnicities and columns for year.
+
+```{r}
+popular_baby_names %>%
+  filter(childs_first_name == "Olivia", gender == "FEMALE") %>%
+  select(year_of_birth, ethnicity, rank) %>% 
+  pivot_wider(names_from = "year_of_birth", values_from = "rank")
+```
+
+## Produce a similar table showing the most popular name among male children over time.
+
+```{r}
+popular_baby_names %>% 
+  filter(gender == "MALE", rank == 1) %>% 
+  select(year_of_birth, ethnicity, childs_first_name) %>% 
+  pivot_wider(names_from = year_of_birth, values_from = childs_first_name)
+```
+
+## Finally, for male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis).
+
+```{r}
+popular_baby_names %>%
+  filter(gender == "MALE", ethnicity == "White non hispanic", year_of_birth == 2016) %>%
+  ggplot(aes(x = rank, y = count)) + geom_point()
+```
 
 
 
