@@ -52,6 +52,7 @@ For the combined precipitation, there are `r nrow(comb_precipitation)` observati
 
 ```{r clean_pols}
 pols_moth = read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
   separate(mon, into = c("year", "month", "day"), convert = TRUE) %>%
   mutate(month = month.name[month], 
     president = recode(prez_dem, "0" = "dem", "1" = "gop")) %>%
@@ -61,7 +62,8 @@ pols_moth = read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
 ## Second, clean the data in snp.csv using a similar process to the above.
 
 ```{r clean_snp}
-snp = read.csv("./fivethirtyeight_datasets/snp.csv") %>%
+snp = read_csv("./fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
   separate(date, into = c("year", "month", "day"), convert = TRUE) %>%
   arrange(year, month) %>%
   mutate(month = month.name[month]) %>%
@@ -72,6 +74,33 @@ snp = read.csv("./fivethirtyeight_datasets/snp.csv") %>%
 ## Third, tidy the unemployment data so that it can be merged with the previous datasets.
 
 ```{r tidy_unemployment}
-
+unemployment = read_csv("./fivethirtyeight_datasets/unemployment.csv") %>%
+  pivot_longer(Jan:Dec, names_to = "month", values_to = "unemployment") %>%
+  mutate(month = recode(month, Jan = "January", Feb = "February",
+                        Mar = "March", Apr = "April",
+                        May = "May", Jun = "June",
+                        Jul = "July", Aug = "August",
+                        Sep = "September", Oct = "October",
+                        Nov = "November", Dec = "December")) %>%
+  rename(year = Year)
 ```
+
+## Join the datasets by merging snp into pols, and merging unemployment into the result.
+
+```{r }
+comb_prob2 = left_join(pols_moth, snp) %>%
+  left_join(., unemployment)
+```
+
+The original pols-month.csv dataset is related to the number of national politicians who are democratic or republican at any given time. For pols_moth dataset, there are `r nrow(pols_moth)` observations and `r ncol(pols_moth)` variables. The variables are year(range from `r min(pols_moth$year)` to `r max(pols_moth$year)`), month(from January to December), the number of republican governors on the associated date, the number of national politicians who are democratic or republican(gov_gop, sen_gop, rep_gop, gov_dem, sen_dem and rep_dem) and the sitting president is democratic or republican.
+
+The original snp.csv is  related to Standard & Poor’s stock market index. For the resulting snp dataset, there are `r nrow(snp)` observations and `r ncol(snp)` variables. The variables are year(range from `r min(snp$year)` to `r max(snp$year)`) and the closing values of the S&P stock index on the associated date.
+
+The original unemployment.csv dataset is related to the percentage of unemployment of the associated year in months. For the resulting unemployment dataset, there are `r nrow(unemployment)` observations and `r ncol(unemployment)` variables. The variables are years(range from `r min(unemployment$year)` to `r max(unemployment$year)`), month(from January to December) and the unemployment percentage.
+
+The merged dataset comb_prob2 has `r nrow(comb_prob2)` observations and `r ncol(comb_prob2)` variables. The dataset contains all of the variables above
+
+
+
+
 
