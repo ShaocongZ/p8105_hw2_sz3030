@@ -46,3 +46,32 @@ For the Mr.Trash Wheel sheet, there are `r nrow(trash.wheel)` observations and `
 
 For the combined precipitation, there are `r nrow(comb_precipitation)` observations and `r ncol(comb_precipitation)` variables. The variables includes information about the year, month and its total precipitation. What's more, the total precipitation in 2018 is `r comb_precipitation %>% filter(year == 2018) %>% pull(total) %>% sum()`
 
+# Problem 2
+
+## First, clean the data in pols-month.csv.
+
+```{r clean_pols}
+pols_moth = read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
+  separate(mon, into = c("year", "month", "day"), convert = TRUE) %>%
+  mutate(month = month.name[month], 
+    president = recode(prez_dem, "0" = "dem", "1" = "gop")) %>%
+  select(-prez_dem, -prez_gop, -day)
+```
+
+## Second, clean the data in snp.csv using a similar process to the above.
+
+```{r clean_snp}
+snp = read.csv("./fivethirtyeight_datasets/snp.csv") %>%
+  separate(date, into = c("year", "month", "day"), convert = TRUE) %>%
+  arrange(year, month) %>%
+  mutate(month = month.name[month]) %>%
+  select(year, month, close) 
+```
+
+
+## Third, tidy the unemployment data so that it can be merged with the previous datasets.
+
+```{r tidy_unemployment}
+
+```
+
