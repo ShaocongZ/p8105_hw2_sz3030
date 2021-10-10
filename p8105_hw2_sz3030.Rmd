@@ -65,15 +65,6 @@ pols_moth = read_csv("./fivethirtyeight_datasets/pols-month.csv") %>%
 ## Second, clean the data in snp.csv using a similar process to the above.
 
 ```{r clean_snp}
-snp = read_csv("./fivethirtyeight_datasets/snp.csv") %>%
-  janitor::clean_names() %>%
-  separate(date, into = c("year", "month", "day"), convert = TRUE) %>%
-  arrange(year, month) %>%
-  mutate(month = month.name[month]) %>%
-  select(year, month, close) 
-```
-
-```{r}
 year.function = function(dat){
   for (i in 1:nrow(dat)) {
     if(dat$year[i] >= 0 && dat$year[i] <= 15){
